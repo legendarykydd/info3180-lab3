@@ -7,6 +7,10 @@ This file creates your application.
 
 from app import app
 from flask import render_template, request, redirect, url_for, flash
+from forms import ContactForm
+from flask_mail import Message
+from _init_ import mail
+
 
 
 ###
@@ -23,8 +27,8 @@ def home():
 def about():
     """Render the website's about page."""
     return render_template('about.html', name="Mary Jane")
-
-
+    
+    
 ###
 # The functions below should be applicable to all Flask apps.
 ###
@@ -34,6 +38,24 @@ def send_text_file(file_name):
     """Send your static text file."""
     file_dot_text = file_name + '.txt'
     return app.send_static_file(file_dot_text)
+
+@app.route("/contact",methods=["GET", "POST"])
+def contact():
+    contactForm = ContactForm()
+    
+    if request.method == "POST":
+        if contactForm.validate_on_submit():
+            subject = contactForm.subject.data
+            name = contactForm.name.data
+            email = contactForm.email.data
+            message = contactForm.message.data
+            msg = Message(subject,sender=(name,email),recipients=[email])
+            msg.body = message
+            mail.send(msg)
+            flash("Your message was sent")
+            redirect(url_for('home'))
+    return render_template('contact.html', form=contactForm)
+
 
 
 @app.after_request
